@@ -1,0 +1,28 @@
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+*.crt
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+*.wal
+*.shm
+
+# Logs
+*.log
+logs/
+spark_logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Jar files
+jars/*.jar
+
+# IDP Manager
+idp_manager/

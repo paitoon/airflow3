@@ -1,0 +1,11 @@
+{
+  "table": "Employee",
+  "source_rows": 8,
+  "cleansed_rows": 8,
+  "duplicate_rows_removed": 0,
+  "primary_keys": [
+    "EmployeeId"
+  ],
+  "source_path": "/data/chinook_csv/Employee.csv",
+  "target_path": "/data/chinook_cleansed/Employee"
+}

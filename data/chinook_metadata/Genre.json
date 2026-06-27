@@ -1,0 +1,27 @@
+{
+  "table": "Genre",
+  "columns": [
+    {
+      "cid": 0,
+      "name": "GenreId",
+      "type": "INTEGER",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "Name",
+      "type": "NVARCHAR(120)",
+      "notnull": 0,
+      "dflt_value": null,
+      "pk": 0
+    }
+  ],
+  "primary_keys": [
+    "GenreId"
+  ],
+  "foreign_keys": [],
+  "row_count": 25,
+  "csv_path": "/data/chinook_csv/Genre.csv"
+}

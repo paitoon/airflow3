@@ -1,0 +1,49 @@
+{
+  "table": "PlaylistTrack",
+  "columns": [
+    {
+      "cid": 0,
+      "name": "PlaylistId",
+      "type": "INTEGER",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 1
+    },
+    {
+      "cid": 1,
+      "name": "TrackId",
+      "type": "INTEGER",
+      "notnull": 1,
+      "dflt_value": null,
+      "pk": 2
+    }
+  ],
+  "primary_keys": [
+    "PlaylistId",
+    "TrackId"
+  ],
+  "foreign_keys": [
+    {
+      "id": 0,
+      "seq": 0,
+      "table": "Track",
+      "from": "TrackId",
+      "to": "TrackId",
+      "on_update": "NO ACTION",
+      "on_delete": "NO ACTION",
+      "match": "NONE"
+    },
+    {
+      "id": 1,
+      "seq": 0,
+      "table": "Playlist",
+      "from": "PlaylistId",
+      "to": "PlaylistId",
+      "on_update": "NO ACTION",
+      "on_delete": "NO ACTION",
+      "match": "NONE"
+    }
+  ],
+  "row_count": 8715,
+  "csv_path": "/data/chinook_csv/PlaylistTrack.csv"
+}

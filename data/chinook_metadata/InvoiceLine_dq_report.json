@@ -1,0 +1,11 @@
+{
+  "table": "InvoiceLine",
+  "source_rows": 2240,
+  "cleansed_rows": 2240,
+  "duplicate_rows_removed": 0,
+  "primary_keys": [
+    "InvoiceLineId"
+  ],
+  "source_path": "/data/chinook_csv/InvoiceLine.csv",
+  "target_path": "/data/chinook_cleansed/InvoiceLine"
+}

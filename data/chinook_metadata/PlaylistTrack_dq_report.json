@@ -1,0 +1,12 @@
+{
+  "table": "PlaylistTrack",
+  "source_rows": 8715,
+  "cleansed_rows": 8715,
+  "duplicate_rows_removed": 0,
+  "primary_keys": [
+    "PlaylistId",
+    "TrackId"
+  ],
+  "source_path": "/data/chinook_csv/PlaylistTrack.csv",
+  "target_path": "/data/chinook_cleansed/PlaylistTrack"
+}
