@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.bash import BashOperator
-from airflow.sensors.external_task import ExternalTaskSensor
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
 
 from chinook_spark_common import SPARK_CONF, SPARK_PACKAGES
@@ -23,30 +22,6 @@ with DAG(
 ) as dag:
 
     start = EmptyOperator(task_id="start")
-
-    wait_for_playlist = ExternalTaskSensor(
-        task_id="wait_for_playlist",
-        external_dag_id="chinook_playlist_to_delta_dag",
-        external_task_id="finish",
-        allowed_states=["success"],
-        failed_states=["failed", "skipped"],
-        mode="reschedule",
-        poke_interval=10,
-        timeout=1800,
-        execution_timeout=timedelta(minutes=35),
-    )
-
-    wait_for_track = ExternalTaskSensor(
-        task_id="wait_for_track",
-        external_dag_id="chinook_track_to_delta_dag",
-        external_task_id="finish",
-        allowed_states=["success"],
-        failed_states=["failed", "skipped"],
-        mode="reschedule",
-        poke_interval=10,
-        timeout=1800,
-        execution_timeout=timedelta(minutes=35),
-    )
 
     export_sqlite_to_csv = BashOperator(
         task_id="export_sqlite_to_csv",
@@ -124,5 +99,5 @@ with DAG(
 
     finish = EmptyOperator(task_id="finish")
 
-    start >> [wait_for_playlist, wait_for_track] >> export_sqlite_to_csv
+    start >> export_sqlite_to_csv
     export_sqlite_to_csv >> validate_csv >> data_quality_cleansing >> validate_cleansed_data >> load_cleansed_to_delta >> validate_delta >> finish

@@ -7,7 +7,21 @@ from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from chinook_callbacks import get_default_args, on_dag_success, on_dag_failure
 
 
-TABLES = ['Artist', 'Album', 'Genre', 'MediaType', 'Track', 'Playlist', 'PlaylistTrack', 'Employee', 'Customer', 'Invoice', 'InvoiceLine']
+TRIGGER_POKE_INTERVAL = 10
+
+
+def trigger_table(table: str) -> TriggerDagRunOperator:
+    table_key = table.lower()
+    return TriggerDagRunOperator(
+        task_id=f"trigger_{table_key}",
+        trigger_dag_id=f"chinook_{table_key}_to_delta_dag",
+        reset_dag_run=True,
+        wait_for_completion=True,
+        poke_interval=TRIGGER_POKE_INTERVAL,
+        allowed_states=["success"],
+        failed_states=["failed"],
+        logical_date="{{ data_interval_start }}",
+    )
 
 
 with DAG(
@@ -24,17 +38,36 @@ with DAG(
 
     start = EmptyOperator(task_id="start")
 
-    trigger_tasks = [
-        TriggerDagRunOperator(
-            task_id=f"trigger_{table.lower()}",
-            trigger_dag_id=f"chinook_{table.lower()}_to_delta_dag",
-            reset_dag_run=True,
-            wait_for_completion=False,
-            logical_date="{{ data_interval_start }}",
-        )
-        for table in TABLES
-    ]
+    trigger_artist = trigger_table("Artist")
+    trigger_album = trigger_table("Album")
+    trigger_genre = trigger_table("Genre")
+    trigger_mediatype = trigger_table("MediaType")
+    trigger_track = trigger_table("Track")
+    trigger_playlist = trigger_table("Playlist")
+    trigger_playlisttrack = trigger_table("PlaylistTrack")
+    trigger_employee = trigger_table("Employee")
+    trigger_customer = trigger_table("Customer")
+    trigger_invoice = trigger_table("Invoice")
+    trigger_invoiceline = trigger_table("InvoiceLine")
 
     finish = EmptyOperator(task_id="finish")
 
-    start >> trigger_tasks >> finish
+    # Dimension/base tables can start immediately.
+    start >> [
+        trigger_artist,
+        trigger_genre,
+        trigger_mediatype,
+        trigger_playlist,
+        trigger_employee,
+    ]
+
+    # Chinook dependency graph.
+    trigger_artist >> trigger_album
+    [trigger_album, trigger_genre, trigger_mediatype] >> trigger_track
+
+    trigger_employee >> trigger_customer >> trigger_invoice
+    [trigger_invoice, trigger_track] >> trigger_invoiceline
+
+    [trigger_playlist, trigger_track] >> trigger_playlisttrack
+
+    [trigger_invoiceline, trigger_playlisttrack] >> finish

@@ -361,7 +361,7 @@ services:
       - ./idp_manager/.env
     command: python run.py
     ports:
-      - "10002:10002"
+      - "8000:8000"
     networks:
       - airflow-spark-net
     restart: always

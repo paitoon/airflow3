@@ -119,6 +119,20 @@ def on_dag_failure(context: dict[str, Any]) -> None:
     _notify(payload)
 
 
+def on_task_success(context: dict[str, Any]) -> None:
+    info = _get_context_info(context)
+    payload = {**info, "status": "success", "scope": "task"}
+
+    logger.info(
+        "[TASK_SUCCESS] dag=%s run=%s task=%s",
+        payload.get("dag_id"),
+        payload.get("dag_run_id"),
+        payload.get("task_id"),
+    )
+
+    _notify(payload)
+        
+        
 def on_task_retry(context: dict[str, Any]) -> None:
     info = _get_context_info(context)
     payload = {**info, "status": "retry", "scope": "task"}
@@ -138,5 +152,7 @@ def get_default_args(retries: int = 2, retry_delay_minutes: int = 3) -> dict[str
     return {
         "retries": retries,
         "retry_delay": timedelta(minutes=retry_delay_minutes),
+        "on_success_callback": on_task_success,
         "on_retry_callback": on_task_retry,
     }
+    
