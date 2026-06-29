@@ -24,5 +24,8 @@ Thumbs.db
 # Jar files
 jars/*.jar
 
+# Data
+data/
+
 # IDP Manager
 idp_manager/
