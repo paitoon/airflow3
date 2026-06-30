@@ -23,20 +23,6 @@ with DAG(
 
     start = EmptyOperator(task_id="start")
 
-
-    simulate_failed_task_for_rca = BashOperator(
-        task_id="simulate_failed_task_for_rca",
-        bash_command=(
-            "echo '[RCA_TEST_ERROR] intentional permanent failure for RCA failed log collection'; "
-            "echo 'ERROR simulated database deadlock while loading Invoice'; "
-            "echo 'Traceback (most recent call last): simulated final failure'; "
-            "exit 1"
-        ),
-        retries=1,
-        retry_delay=timedelta(seconds=20),
-        execution_timeout=timedelta(minutes=2),
-    )
-
     export_sqlite_to_csv = BashOperator(
         task_id="export_sqlite_to_csv",
         bash_command=(
@@ -113,5 +99,5 @@ with DAG(
 
     finish = EmptyOperator(task_id="finish")
 
-    start >> simulate_failed_task_for_rca >> export_sqlite_to_csv
+    start >> export_sqlite_to_csv
     export_sqlite_to_csv >> validate_csv >> data_quality_cleansing >> validate_cleansed_data >> load_cleansed_to_delta >> validate_delta >> finish

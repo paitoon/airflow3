@@ -10,12 +10,12 @@ from chinook_callbacks import get_default_args, on_dag_success, on_dag_failure
 
 
 with DAG(
-    dag_id="chinook_invoice_to_delta_dag",
+    dag_id="chinook_genre_to_delta_dag",
     start_date=datetime(2025, 1, 1),
     schedule=None,
     catchup=False,
     dagrun_timeout=timedelta(minutes=60),
-    tags=["chinook", "invoice", "sqlite", "csv", "delta", "bronze", "etl", "dq"],
+    tags=["chinook", "genre", "sqlite", "csv", "delta", "bronze", "etl", "dq"],
     default_args=get_default_args(),
     on_success_callback=on_dag_success,
     on_failure_callback=on_dag_failure,
@@ -23,25 +23,11 @@ with DAG(
 
     start = EmptyOperator(task_id="start")
 
-
-    simulate_failed_task_for_rca = BashOperator(
-        task_id="simulate_failed_task_for_rca",
-        bash_command=(
-            "echo '[RCA_TEST_ERROR] intentional permanent failure for RCA failed log collection'; "
-            "echo 'ERROR simulated database deadlock while loading Invoice'; "
-            "echo 'Traceback (most recent call last): simulated final failure'; "
-            "exit 1"
-        ),
-        retries=1,
-        retry_delay=timedelta(seconds=20),
-        execution_timeout=timedelta(minutes=2),
-    )
-
     export_sqlite_to_csv = BashOperator(
         task_id="export_sqlite_to_csv",
         bash_command=(
             "python /opt/airflow/dags/scripts/export_chinook_table.py "
-            "--table Invoice "
+            "--table Genre "
             "--sqlite-path /data/chinook.db "
             "--csv-dir /data/chinook_csv "
             "--metadata-dir /data/chinook_metadata"
@@ -51,7 +37,7 @@ with DAG(
 
     validate_csv = BashOperator(
         task_id="validate_csv",
-        bash_command="test -s /data/chinook_csv/Invoice.csv && echo '[VALIDATE_CSV_OK] /data/chinook_csv/Invoice.csv'",
+        bash_command="test -s /data/chinook_csv/Genre.csv && echo '[VALIDATE_CSV_OK] /data/chinook_csv/Genre.csv'",
         execution_timeout=timedelta(minutes=2),
     )
 
@@ -62,7 +48,7 @@ with DAG(
         packages=SPARK_PACKAGES,
         conf=SPARK_CONF,
         application_args=[
-            "--table", "Invoice",
+            "--table", "Genre",
             "--csv-dir", "/data/chinook_csv",
             "--cleansed-dir", "/data/chinook_cleansed",
             "--metadata-dir", "/data/chinook_metadata",
@@ -74,9 +60,9 @@ with DAG(
     validate_cleansed_data = BashOperator(
         task_id="validate_cleansed_data",
         bash_command=(
-            "test -d /data/chinook_cleansed/Invoice && "
-            "test -s /data/chinook_metadata/Invoice_dq_report.json && "
-            "echo '[VALIDATE_CLEANSED_OK] /data/chinook_cleansed/Invoice'"
+            "test -d /data/chinook_cleansed/Genre && "
+            "test -s /data/chinook_metadata/Genre_dq_report.json && "
+            "echo '[VALIDATE_CLEANSED_OK] /data/chinook_cleansed/Genre'"
         ),
         execution_timeout=timedelta(minutes=2),
     )
@@ -88,7 +74,7 @@ with DAG(
         packages=SPARK_PACKAGES,
         conf=SPARK_CONF,
         application_args=[
-            "--table", "Invoice",
+            "--table", "Genre",
             "--cleansed-dir", "/data/chinook_cleansed",
             "--target-base", "s3a://lakehouse/bronze/chinook",
         ],
@@ -103,7 +89,7 @@ with DAG(
         packages=SPARK_PACKAGES,
         conf=SPARK_CONF,
         application_args=[
-            "--table", "Invoice",
+            "--table", "Genre",
             "--target-base", "s3a://lakehouse/bronze/chinook",
             "--min-rows", "0",
         ],
@@ -113,5 +99,5 @@ with DAG(
 
     finish = EmptyOperator(task_id="finish")
 
-    start >> simulate_failed_task_for_rca >> export_sqlite_to_csv
+    start >> export_sqlite_to_csv
     export_sqlite_to_csv >> validate_csv >> data_quality_cleansing >> validate_cleansed_data >> load_cleansed_to_delta >> validate_delta >> finish

@@ -23,6 +23,26 @@ with DAG(
 
     start = EmptyOperator(task_id="start")
 
+
+    simulate_retry_once_for_rca = BashOperator(
+        task_id="simulate_retry_once_for_rca",
+        bash_command=(
+            "set -e; "
+            "MARKER=/tmp/rca_retry_once_{{ dag.dag_id }}_{{ run_id | replace(':', '_') }}_{{ task.task_id }}; "
+            "echo '[RCA_TEST] retry-once task marker='${MARKER}; "
+            "if [ ! -f ${MARKER} ]; then "
+            "  echo '[RCA_TEST_ERROR] intentional first-attempt failure for RCA retry collection'; "
+            "  echo 'Traceback (most recent call last): simulated retry'; "
+            "  touch ${MARKER}; "
+            "  exit 1; "
+            "fi; "
+            "echo '[RCA_TEST_OK] retry-once task succeeded after retry'"
+        ),
+        retries=1,
+        retry_delay=timedelta(seconds=20),
+        execution_timeout=timedelta(minutes=2),
+    )
+
     export_sqlite_to_csv = BashOperator(
         task_id="export_sqlite_to_csv",
         bash_command=(
@@ -99,5 +119,5 @@ with DAG(
 
     finish = EmptyOperator(task_id="finish")
 
-    start >> export_sqlite_to_csv
+    start >> simulate_retry_once_for_rca >> export_sqlite_to_csv
     export_sqlite_to_csv >> validate_csv >> data_quality_cleansing >> validate_cleansed_data >> load_cleansed_to_delta >> validate_delta >> finish
