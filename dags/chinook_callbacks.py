@@ -133,6 +133,24 @@ def on_task_success(context: dict[str, Any]) -> None:
     _notify(payload)
         
         
+def on_task_failure(context: dict[str, Any]) -> None:
+    """Task fail จริง (หมด retry แล้ว) — ส่ง scope=task เพื่อให้ idp_manager
+    บันทึก failed_task_id และเปิด RCA case + email escalation ได้ครบ"""
+    info = _get_context_info(context)
+    payload = {**info, "status": "failed", "scope": "task"}
+
+    logger.error(
+        "[TASK_FAILURE] dag=%s run=%s task=%s try=%s exception=%s",
+        payload.get("dag_id"),
+        payload.get("dag_run_id"),
+        payload.get("task_id"),
+        payload.get("try_number"),
+        payload.get("exception"),
+    )
+
+    _notify(payload)
+
+
 def on_task_retry(context: dict[str, Any]) -> None:
     info = _get_context_info(context)
     payload = {**info, "status": "retry", "scope": "task"}
@@ -154,5 +172,6 @@ def get_default_args(retries: int = 2, retry_delay_minutes: int = 3) -> dict[str
         "retry_delay": timedelta(minutes=retry_delay_minutes),
         "on_success_callback": on_task_success,
         "on_retry_callback": on_task_retry,
+        "on_failure_callback": on_task_failure,
     }
     
